@@ -14,7 +14,7 @@ function set_value(cell, value) {
   sheet.getRange(cell).setValue(value)
 }
 
-
+//更新があった場合のみ、メールを送る
 function send_mail(title) {
 
   var body = title + "\n\n" + "Twins: " + url;
@@ -22,7 +22,7 @@ function send_mail(title) {
   
 }
 
-
+//更新がないか確認する
 function update() {
 
   var response = UrlFetchApp.fetch(url);
@@ -30,21 +30,21 @@ function update() {
   
   var previous_title = get_value("A1");
 
+  //初回実行の場合、スクレイピングだけをして終了する
   if (previous_title == "") {
      set_value("A1", get_title(content));
      return 0;
   }
 
   var title = get_title(content)
-  Logger.log(title)
   
+  //更新があった場合
   if (previous_title != title) {
      set_value("A1", title);
      send_mail(title);
    }
 
    else {
-     Logger.log("No change")
      return 0;
    }
    
@@ -53,6 +53,7 @@ function update() {
 
 function get_title(content) {
 
+  //先頭の要素を取得
   var data = Parser.data(content).from('<a href="JavaScript:void(0);').to('</a>').build();
   listed_data = data.split("")
 
