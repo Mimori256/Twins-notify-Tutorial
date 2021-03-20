@@ -1,6 +1,6 @@
 //変数を編集してください。
 var sheet = SpreadsheetApp.openByUrl("自分の空のスプレッドシートのURLを入力してください");
-var address = "自分のメールアドレスを入力してください"
+var address = "自分のメールアドレスを入力してください";
 
 var url = "https://twins.tsukuba.ac.jp/campusweb/campusportal.do";
 
@@ -11,10 +11,11 @@ function get_value(cell) {
 
 
 function set_value(cell, value) {
-  sheet.getRange(cell).setValue(value)
+  sheet.getRange(cell).setValue(value);
 }
 
-//更新があった場合のみ、メールを送る
+
+//更新があった場合、メールを送信
 function send_mail(title) {
 
   var body = title + "\n\n" + "Twins: " + url;
@@ -22,7 +23,7 @@ function send_mail(title) {
   
 }
 
-//更新がないか確認する
+
 function update() {
 
   var response = UrlFetchApp.fetch(url);
@@ -30,34 +31,34 @@ function update() {
   
   var previous_title = get_value("A1");
 
+  
   //初回実行の場合、スクレイピングだけをして終了する
   if (previous_title == "") {
      set_value("A1", get_title(content));
      return 0;
   }
 
-  var title = get_title(content)
+  var tmp = get_title(content);
+  var title_1 = tmp[0];
+  var title_2 = tmp[1];
   
-  //更新があった場合
-  if (previous_title != title) {
-     set_value("A1", title);
-     send_mail(title);
+  if (previous_title == title_2) {
+     set_value("A1", title_1);
+     send_mail(title_1);
    }
 
-   else {
+   else if (previous_title != title_2 && previous_title != title_1) {
+     set_value("A1", title_1);
+     let title = title_1 + "\n\n" + title_2;
      return 0;
    }
    
  }
  
 
-function get_title(content) {
+function form_text(listed_data) {
 
-  //先頭の要素を取得
-  var data = Parser.data(content).from('<a href="JavaScript:void(0);').to('</a>').build();
-  listed_data = data.split("")
-
-  var index = 0
+ var index = 0
 
   for (let i=0; i<listed_data.length; i++) {
     if (listed_data[i] == ">") {
@@ -69,6 +70,22 @@ function get_title(content) {
     title = title + listed_data[i];
   }
 
-  return title.trim().replace("\n", "")
+  return title.trim().replace("\n", "");
+
+}
+
+
+function get_title(content) {
+
+  var data = Parser.data(content).from('<a href="JavaScript:void(0);').to('</a>').iterate();
+
+  //先頭二つの記事のタイトルを取得する
+  var listed_data_1 = data[0].split("");
+  var listed_data_2 = data[1].split("");
+
+  var title_1 = form_text(listed_data_1);
+  var title_2 = form_text(listed_data_2);
+
+  return [title_1, title_2];
   
 }
